@@ -14,28 +14,30 @@ Satsuma supports *two distinct approaches* to symmetry breaking:
 1. **Fixing** with `satsuma fix`
 2. **Lex-Leader** constraints with `satsuma lex`. 
 
-Suppose we have a CNF SAT instance `hole010.cnf`, for which we want to handle symmetry before solving.
+Consider the CNF SAT instance `examples/php-015-14.cnf`, for which we want to handle symmetry before solving.
 An example use of  *satsuma* with the SAT solver *cryptominisat* may look as follows. 
 
 Using fixing:
 ```text 
-satsuma fix hole010.cnf > hole010.break.cnf
-cryptominisat5 hole010.break.cnf
+satsuma fix examples/php-015-014.cnf > php-015-014.break.cnf
+cryptominisat5 php-015-014.break.cnf
 ```
 
 Using lex-leader constraints:
 ```text 
-satsuma lex hole010.cnf > hole010.break.cnf
+satsuma lex examples/php-015-014.cnf > php-015-014.break.cnf
 cryptominisat5 hole010.break.cnf
 ```
 
-Each of these passes `hole010.cnf` to satsuma, which will write the resulting formula to the file `hole010.break.cnf`.
-The formula `hole010.cnf` is satisfiable, if and only if `hole010.break.cnf` is satisfiable.
-We then pass `hole010.break.cnf` to a SAT solver of choice, in the case above to cryptominisat.
+Each of these passes `php-015-014.cnf` to satsuma, which will write the resulting formula to the file `php-015-014.break.cnf`.
+The formula `php-015-014.cnf` is satisfiable, if and only if `php-015-014.break.cnf` is satisfiable.
+We then pass `php-015-014.break.cnf` to a SAT solver of choice, in the case above to cryptominisat.
 
 In some modes, the tool *may remove variables from the formula*. The resulting formula remains equisatisfiable with the original one, 
 but satisfying assignments for the reduced formula may not directly assign all variables of the original formula.
 If you want every satisfying assignment of the resulting formula to also be a valid satisfying assignment of the original formula, use `--add-reduced-as-unit`.
+Indeed, in fixing mode, the formula `php-015-014.cnf` above is completely solved by *satsuma*.
+It produces as output the trivially unsatisfiable formula that only contains the empty clause.
 
 The default settings aim to provide a good balance between overhead and effectiveness. 
 However, the tool can be configured in many ways to attempt weaker, stronger, or diversified breaking. 
@@ -69,27 +71,31 @@ This compiles Cliquer into satsuma and enables corresponding heuristics.
 ## Proofs 
 In *fixing* mode, the tool can output *SR*, *binary SR*, and *VeriPB* proofs. 
 In lex-leader mode, the tool can output *VeriPB* proofs.
-At this stage, proof output in *SR* and *binary SR* format is considered **stable**, 
-whereas *VeriPB* proof output is **experimental**.
 
 For example, running 
 ```text 
-satsuma fix hole010.cnf --proof-file proof.out > hole010.break.cnf
+satsuma fix examples/php-015-014.cnf --proof-file proof.out > php-015-014.break.cnf
 ```
 will output a binary SR proof to the file `proof.out`.
 When `--proof-file` is used, the default proof format is *binary SR*. Use `--sr` to output an ASCII *SR* proof, or `--veripb` to output a *VeriPB* proof.
 
-Note that in order to obtain a full proof of unsatisfiability, the proof of *satsuma* then needs to be combined 
-with a proof of the SAT solver. SR proofs can be checked using [dsr-trim](https://github.com/ccodel/dsr-trim), and 
+Note that in order to obtain a full proof of unsatisfiability, *satsuma*'s proof usually  needs to be combined 
+with a proof of the SAT solver. 
+For our example formula, *satsuma* produces a full proof of unsatisfiability.
+SR proofs can be checked using [dsr-trim](https://github.com/ccodel/dsr-trim), and 
 VeriPB proofs can be checked using [VeriPB](https://veripb.org/).
+
+At this stage, proof output in *SR* and *binary SR* format is considered **stable**, 
+whereas *VeriPB* proof output is **experimental**.
 
 ## Bugs & Feedback
 If you encounter any bugs or have any feedback to share, please feel free to reach out to me at\
 `anders (at) cs.uni-kl.de`.
 
 ## Publications
-The design of *satsuma* is based on the following papers. 
-If you use the tool in your research work, please cite at least one of the papers.
+If you use this tool in a research or academic setting, please cite the most relevant papers from the list below.
+
+The main design of *satsuma* is based on the following papers. 
 
 "Satsuma: Structure-based Symmetry Breaking in SAT" at SAT '24 ([paper](https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.SAT.2024.4), [bibtex](https://dblp.uni-trier.de/rec/conf/cp/AndersBR24.html?view=bibtex))\
 by Markus Anders, Sofia Brenner, Gaurav Rattan
