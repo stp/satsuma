@@ -1319,13 +1319,21 @@ class proof {
 
     void blocked_clause(const std::vector<int> &clause) {
         if(proof_format == VERIPB) {
-            proof_file << "rup ";
+            proof_file << "red ";
             for (auto lit : clause) {
                 proof_file << "1 ";
                 literal(lit);
                 proof_file << " ";
             }
-            proof_file << ">= 1;\n";
+            proof_file << ">= 1 : ";
+
+            if (clause.size() > 0) {
+                const int64_t first_lit = clause[0];
+                variable(first_lit);
+                proof_file << " -> ";
+                proof_file << (first_lit < 0 ? "0" : "1");
+            }
+            proof_file << ";\n";
             add_count_constraints();
         } else if(is_sr_proof_format()) {
             dimacs_add_line_start();
