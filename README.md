@@ -69,12 +69,15 @@ This compiles Cliquer into satsuma and enables corresponding heuristics.
 ## Proofs 
 In *fixing* mode, the tool can output *SR*, *binary SR*, and *VeriPB* proofs. 
 In lex-leader mode, the tool can output *VeriPB* proofs.
+At this stage, proof output in *SR* and *binary SR* format is considered **stable**, w
+hereas *VeriPB* proof output is **experimental**.
 
 For example, running 
 ```text 
 satsuma fix hole010.cnf --proof-file proof.out > hole010.break.cnf
 ```
 will output a binary SR proof to the file `proof.out`.
+When `--proof-file` is used, the default proof format is *binary SR*. Use `--sr` to output an ASCII *SR* proof, or `--veripb` to output a *VeriPB* proof.
 
 Note that in order to obtain a full proof of unsatisfiability, the proof of *satsuma* then needs to be combined 
 with a proof of the SAT solver. SR proofs can be checked using [dsr-trim](https://github.com/ccodel/dsr-trim), and 
