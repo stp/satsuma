@@ -69,8 +69,8 @@ This compiles Cliquer into satsuma and enables corresponding heuristics.
 ## Proofs 
 In *fixing* mode, the tool can output *SR*, *binary SR*, and *VeriPB* proofs. 
 In lex-leader mode, the tool can output *VeriPB* proofs.
-At this stage, proof output in *SR* and *binary SR* format is considered **stable**, w
-hereas *VeriPB* proof output is **experimental**.
+At this stage, proof output in *SR* and *binary SR* format is considered **stable**, 
+whereas *VeriPB* proof output is **experimental**.
 
 For example, running 
 ```text 
