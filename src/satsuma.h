@@ -19,7 +19,22 @@
 #include "proof.h"
 #include "tracker.h"
 
+#define SATSUMA_CNF_OUTPUT_API 1
+
 namespace satsuma {
+    /** In-memory CNF output. Literals use signed, one-based DIMACS numbers.
+     *  Clause storage is borrowed only for the duration of clause(). An empty
+     *  clause represents a contradiction; begin() includes extension variables.
+     *  Set add_reduced_as_unit to preserve models of the original formula.
+     */
+    class cnf_output {
+    public:
+        virtual ~cnf_output() = default;
+        virtual void begin(int variables, int clauses) = 0;
+        virtual void clause(const int* literals, size_t size) = 0;
+        virtual void end() {}
+    };
+
     /**
      * \brief The satsuma preprocessor.
      *
@@ -29,13 +44,14 @@ namespace satsuma {
         bool              entered_output_file   = false;
         std::string       output_filename       = "";
         std::string       output_graph_filename = "";
+        cnf_output*       cnf_sink = nullptr;
         dejavu::sgraph*   input_graph    = nullptr;
         dejavu::coloring* input_coloring = nullptr;
 
         // further modules
         std::ostream* log         = &std::clog; /**< logging */
         proof*        my_proof    = nullptr;    /**< proof logging */
-        tracker*      track;
+        tracker*      track = nullptr;
 
         // proof options 
         bool add_reduced_variables_as_unit = false; // will make sure that SAT solver prints assignment that satisfies 
@@ -387,6 +403,10 @@ namespace satsuma {
         }
 
     public:
+        // A borrowed sink overrides DIMACS file/stdout output for CNF input.
+        // nullptr restores the existing command-line output behaviour.
+        void set_cnf_output(cnf_output* sink) { cnf_sink = sink; }
+
         void set_struct_only(bool use_only_struct) {
             struct_only = use_only_struct;
         }
@@ -611,6 +631,18 @@ namespace satsuma {
         }
 
         long output_formula(cnf2wl& formula) {
+            if(cnf_sink) {
+                cnf_sink->begin(formula.n_variables(), formula.n_clauses());
+                std::vector<int> clause;
+                for(int i = 0; i < formula.n_clauses(); ++i) {
+                    clause.clear();
+                    for(int j = 0; j < formula.clause_size(i); ++j)
+                        clause.push_back(formula.literal_at_clause_pos(i, j));
+                    cnf_sink->clause(clause.data(), clause.size());
+                }
+                cnf_sink->end();
+                return 0;
+            }
             // file for output
             FILE* output_file;
 
@@ -839,6 +871,28 @@ namespace satsuma {
                 if(track) track->update_routine(OUTPUT);
                 (*log) << "c \n";
                 (*log) << "c write result";
+
+                if(cnf_sink) {
+                    cnf_sink->begin(formula_db.n_variables() + sbp.n_extra_variables(),
+                                    formula_db.n_clauses() + sbp.n_clauses() +
+                                    static_cast<int>(proof_fix_literals.size()));
+                    std::vector<int> clause;
+                    for(int i = 0; i < formula_db.n_clauses(); ++i) {
+                        clause.clear();
+                        for(int j = 0; j < formula_db.clause_size(i); ++j)
+                            clause.push_back(formula_db.literal_at_clause_pos(i, j));
+                        cnf_sink->clause(clause.data(), clause.size());
+                    }
+                    for(int i = 0; i < sbp.n_clauses(); ++i) {
+                        const auto& c = sbp.get_clause(i);
+                        cnf_sink->clause(c.data(), c.size());
+                    }
+                    for(const int literal : proof_fix_literals)
+                        cnf_sink->clause(&literal, 1);
+                    cnf_sink->end();
+                    if(track) track->update_routine(REFINE);
+                    break;
+                }
 
                 // file for output
                 FILE* output_file;
