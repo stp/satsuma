@@ -50,6 +50,33 @@ satsuma lex --opt-reopt formula.cnf
 satsuma lex --opt-reopt --opt-conjugations 5000 formula.cnf  // (or >5000)
 satsuma lex --schreier-cuts formula.cnf
 ```
+## STP fork: CNF output API
+
+The `upstream` branch preserves the imported Satsuma sources. The `stp`
+branch adds a borrowed `satsuma::cnf_output` sink to the preprocessor:
+`begin(variables, clauses)`, `clause(literals, size)`, and `end()` receive
+the output directly, without writing a DIMACS file or closing stdout.
+Literals use signed, one-based DIMACS numbers. Set the tracker and sink
+before calling `preprocess`; the caller owns both. Set
+`set_add_reduced_as_unit(true)` to retain assignments removed by simplification
+when the caller needs a model of the original formula.
+
+The default CLI output path remains available when no sink is set. Tests
+compare both paths on the bundled examples, empty and conflicting formulas,
+duplicate clauses, and the size-bypass path:
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSATSUMA_BUILD_TESTING=ON
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure
+```
+
+For STP's ExternalProject, `-DSATSUMA_BUILD_CLI=OFF` installs only the
+headers and licences. Dejavu is pinned to
+`4c275e9ebac4fe51a26aac406682b9bcbfd03a9d` and fetched into the build tree.
+`cmake --install build --prefix <prefix>` installs the complete header API
+under `<prefix>/include/satsuma`. The API requires C++20.
+
 ## Optional Cliquer Support
 
 For additional heuristics, *satsuma* can optionally be built with [Cliquer](https://users.aalto.fi/~pat/cliquer.html) support.

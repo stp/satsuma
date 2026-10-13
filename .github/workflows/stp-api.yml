@@ -1,0 +1,22 @@
+name: STP CNF API
+on:
+  push:
+    branches: [stp]
+  pull_request:
+    branches: [stp]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cnf-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSATSUMA_BUILD_TESTING=ON
+      - name: Build
+        run: cmake --build build --parallel 2
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Install headers and licences
+        run: cmake --install build --prefix "$RUNNER_TEMP/satsuma"
